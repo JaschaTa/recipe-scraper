@@ -15,26 +15,28 @@ db = client.todayieat
 recipes_collection = db['recipes']
 
 # Fetch all documents from the collection & print CSV
-all_recipes = recipes_collection.find()
+all_recipes = list(recipes_collection.find({}))
+#print(list(all_recipes))
 
+all_fieldnames = set()
 
-filtered_schema = set()
-unique_schema = []
 for recipe in all_recipes:
-    schemas = recipe.keys()
-    for schema in schemas:
-        if schema not in filtered_schema:
-            filtered_schema.add(schema)
-            unique_schema.append(schema)
+    all_fieldnames.update(recipe.keys())
+
+all_fieldnames = list(all_fieldnames) 
+
+print(all_recipes)
+
+with open('recipes.csv', 'w', newline='') as file:
+    writer = csv.DictWriter(file, fieldnames=all_fieldnames)
+    writer.writeheader()
+
+    for recipe in all_recipes:
         
-        
-print(unique_schema)
-
-
-
-
-#fieldnames = list(all_recipes[0].keys()) if all_recipes else []
-#print(fieldnames[0])
+        for field in all_fieldnames:
+            recipe.setdefault(field, None)
+            
+        writer.writerow(recipe)
 
 
 client.close()
