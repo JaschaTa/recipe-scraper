@@ -5,7 +5,9 @@
 
 import requests
 import warnings
+import csv
 from bs4 import BeautifulSoup
+from datetime import datetime
 
 
 def get_webpage_content(url):
@@ -31,44 +33,47 @@ def extract_filtered_links(content, base_url):
     return unique_filtered_links
 
 
-def is_recipe_page(link):
+
+def recipe_extractor(link):
     content = get_webpage_content(link)
     if content and 'class="wprm-recipe-ingredients"' in content.decode('utf-8'):
-        return True
-    return False
+    
+        soup = BeautifulSoup(content, 'html.parser')
+        
+        # Extract title
+        title_tag = soup.find('h1', class_='entry-title')
+        title = title_tag.get_text(strip=True) if title_tag else None
+        
+        # Extract image URL
+        image_url = None
+        if title_tag:  # Ensure the title tag is present
+            subsequent_images = title_tag.find_all_next('img', limit=1)
+            if subsequent_images:
+                image_url = subsequent_images[0].get('src')
+        
+        # Construct the data dictionary
+        if image_url:
+            recipe_data = {
+                'title': title,
+                'recipe_url': link,
+                'image_url': image_url
+            }
+            return recipe_data
+        else:
+            return False
+        
+    else:
+        return False
 
 
-def extract_recipe_details(link):
-    content = get_webpage_content(link)
-    if not content:
-        return None
-    
-    soup = BeautifulSoup(content, 'html.parser')
-    
-    # Extract title
-    title_tag = soup.find('h1', class_='entry-title')
-    title = title_tag.get_text(strip=True) if title_tag else None
-    
-    # Extract image URL
-    image_url = None
-    if title_tag:  # Ensure the title tag is present
-        subsequent_images = title_tag.find_all_next('img', limit=1)
-        if subsequent_images:
-            image_url = subsequent_images[0].get('src')
-    
-    # Construct the data dictionary
-    recipe_data = {
-        'title': title,
-        'recipe_url': link,
-        'image_url': image_url
-    }
-    return recipe_data
 
-
+# -- start here:
 base_url = 'https://elavegan.com/de/'
 content = get_webpage_content(base_url)
 
 all_links = set()
+all_recipes = []
+
 
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=UserWarning)
@@ -77,19 +82,39 @@ with warnings.catch_warnings():
     if content:
         filtered_links = extract_filtered_links(content, base_url)
         all_links.update(filtered_links)
+        for link in all_links:
+            recipe_data = recipe_extractor(link) 
+            if recipe_data:  # Check if the extractor returned data
+                all_recipes.append(recipe_data)
+        
+
+    path = 'extracts/'
+    now = datetime.today().strftime("%Y-%m-%d-%H%M%S")
+    filename = base_url.split('//')[1].split('/')[0]
+    filename = path + now + '_' +  filename + '.csv'
+
+    with open(filename, 'w', newline='') as csvfile:
+        fieldnames = ['title', 'recipe_url', 'image_url']  # the keys in your dictionaries
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+        writer.writeheader() 
+        for recipe in all_recipes:
+            writer.writerow(recipe)
+
+print('done')
 
     # Extract 2nd level links
-        for link in filtered_links:
-            content = get_webpage_content(link)
-            if content:
-                try:
-                    filtered_links_l2 = extract_filtered_links(content, base_url)
-                    all_links.update(filtered_links_l2)
-                except Exception as e:
-                        print(f"Error parsing link {link}: {e}")
+        # for link in filtered_links:
+        #     content = get_webpage_content(link)
+        #     if content:
+        #         try:
+        #             filtered_links_l2 = extract_filtered_links(content, base_url)
+        #             all_links.update(filtered_links_l2)
+        #         except Exception as e:
+        #                 print(f"Error parsing link {link}: {e}")
 
-    print(all_links)
-    print(len(all_links))            
+    # print(all_links)
+    # print(len(all_links))            
 
 
 
