@@ -55,8 +55,13 @@ def recipe_extractor(link):
         if image_url:
             recipe_data = {
                 'title': title,
-                'recipe_url': link,
-                'image_url': image_url
+                'recipeUrl': link,
+                'imageUrl': image_url,
+                'description': '',
+                'blogName': blog,
+                'hidePicture': False,
+                'activate': True,
+                'characteristics': ''
             }
             return recipe_data
         else:
@@ -67,12 +72,18 @@ def recipe_extractor(link):
 
 
 
-# -- start here:
+# !! START HERE !!
 base_url = 'https://elavegan.com/de/'
 content = get_webpage_content(base_url)
 
 all_links = set()
 all_recipes = []
+
+path = 'extracts/'
+now = datetime.today().strftime("%Y-%m-%d-%H%M%S")
+blog = base_url.split('//')[1].split('/')[0]
+filename = path + now + '_' +  blog + '.csv'
+
 
 
 with warnings.catch_warnings():
@@ -88,13 +99,8 @@ with warnings.catch_warnings():
                 all_recipes.append(recipe_data)
         
 
-    path = 'extracts/'
-    now = datetime.today().strftime("%Y-%m-%d-%H%M%S")
-    filename = base_url.split('//')[1].split('/')[0]
-    filename = path + now + '_' +  filename + '.csv'
-
     with open(filename, 'w', newline='') as csvfile:
-        fieldnames = ['title', 'recipe_url', 'image_url']  # the keys in your dictionaries
+        fieldnames = ['title', 'recipeUrl', 'imageUrl', 'description', 'blogName', 'hidePicture', 'activate', 'characteristics']  # the keys in your dictionaries
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
         writer.writeheader() 
