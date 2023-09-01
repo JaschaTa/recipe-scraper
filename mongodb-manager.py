@@ -1,6 +1,7 @@
 import configparser
 from pymongo import MongoClient
 import csv
+from datetime import datetime
 
 # Initialize the configparser object and ead the configuration file
 config = configparser.ConfigParser(interpolation=None)
@@ -27,7 +28,11 @@ all_fieldnames = list(all_fieldnames)
 
 print(all_recipes)
 
-with open('recipes.csv', 'w', newline='') as file:
+path = 'mongodb/'
+now = datetime.today().strftime("%Y-%m-%d-%H%M%S")
+filename = path + now + '_' +  'recipes' + '.csv'
+
+with open(filename, 'w', newline='') as file:
     writer = csv.DictWriter(file, fieldnames=all_fieldnames)
     writer.writeheader()
 
