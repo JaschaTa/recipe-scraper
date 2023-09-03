@@ -26,7 +26,7 @@ for recipe in all_recipes:
 
 all_fieldnames = list(all_fieldnames) 
 
-print(all_recipes)
+#print(all_recipes)
 
 path = 'mongodb/'
 now = datetime.today().strftime("%Y-%m-%d-%H%M%S")
